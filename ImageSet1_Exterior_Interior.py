@@ -17,24 +17,22 @@ from tensorflow.keras import optimizers
 from tensorflow.keras import optimizers
 
 
-# import zipfile
-# with zipfile.ZipFile("Train_9G.zip") as zip_ref:
-#     zip_ref.extractall("targetdir")
-
+# import folder containing images
 dataset = pathlib.Path(r'H:\Downloads\Train2')
 print(dataset)
 image_count = len(list(dataset.glob('*/*.jpg')))
 print("image count " + str(image_count))
 
-# an array(the exterior folder) which will hold the images inside the folder?
+# Image dimensions were changed a few times. It initally defaulted at 180x180
+# As we had done with image set 2, we tried to increase the dimensions to match the images exactly at 280x280, however it actually resulted in lower accuracy by about 4%
+# The dimensions of 200x200 worked best with slightly increased accuracy
 
 
 batch_size = 32
 img_height = 200
 img_width = 200
 
-# train
-# 20% for validation? if there's 149994 images in total or that meets criteria. 80% for training. 20% validation = 29087
+# Training
 
 train_ds = tf.keras.preprocessing.image_dataset_from_directory(
   dataset,
@@ -98,6 +96,12 @@ first_image = image_batch[0]
 # Notice the pixels values are now in `[0,1]`.
 print(np.min(first_image), np.max(first_image))
 
+# New and exlusive to this model, we added  data augmentation with a few different effects
+# First is random flips that randomly flips images so the model that train on these images in different orientations such as inverted positions
+# Second is random rotation that will slightly alter the angles, as not all images are taken at perfect or aligned angles
+# Last is random zoom that will zoom in randomly as implied. This helps understand images better as some images taken naturally are sometimes zoomed in
+# Overall this data augmentation resulted in an 5% increase in accuracy
+
 data_augmentation = Sequential(
   [
     tf.keras.layers.experimental.preprocessing.RandomFlip("horizontal",
@@ -110,6 +114,7 @@ data_augmentation = Sequential(
 )
 
 num_classes = 2
+# We also included the dropout method which helped to further increase accuracy by about 2%.
 
 model = Sequential([
   data_augmentation,
@@ -137,6 +142,9 @@ model.compile(optimizer='adam',
 
 model.summary()
 
+
+#Number of epochs increased by 20 in comparison to other models.
+#This is due to the fact that this model actually increased in accuracy between 17-20 runs, whereas the others did not.
 epochs = 30
 history = model.fit(train_ds,
                     validation_data=val_ds,
